@@ -1,0 +1,38 @@
+file = "E:/MyFiles/Programming/R/fundComponents/stockheld_1.xlsx"
+rptDate = "20211231"
+for(i in 1:length(fundcodes)){
+  tempdf = w.wset('allfundhelddetail',paste('rptdate=20211231;windcode=',fundcodes[i],sep=""))$Data
+  stCodes = tempdf$stock_code
+  stIndustry = data.frame(
+    sw1 = c(),
+    sw2 = c(),
+    zx1 = c(),
+    zx2 = c()
+  )
+  for(j in 1:length(stCodes)){
+    # 由股票代码得到对应行业
+    indust1 = w.wsd(stCodes[j],"industry_sw_2021,industry_citic",rptDate,rptDate,
+                   "industryType=1")$Data
+    indust2 = w.wsd(stCodes[j],"industry_sw_2021,industry_citic",rptDate,rptDate,
+                   "industryType=2")$Data
+    indust = data.frame(
+        sw1 = indust1["INDUSTRY_SW_2021"],
+        sw2 = indust2["INDUSTRY_SW_2021"],
+        zx1 = indust1["INDUSTRY_CITIC"],
+        zx2 = indust2["INDUSTRY_CITIC"]
+    )
+
+    # 将第i个股票对应行业写入stIndustry向量
+    stIndustry = rbind(stIndustry,indust)
+  }
+
+  if(length(tempdf$CODE)==0){
+    print(fundcodes[i])
+    next
+  }
+  tempdf$CODE = fundcodes[i]
+  tempdf = cbind(tempdf,stIndustry)
+  cat(paste(i,tempdf$sec_name[1],sep=":"))
+  xlsx::write.xlsx(tempdf,file,sheetName=tempdf$sec_name[1],append = TRUE)
+
+}

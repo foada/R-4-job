@@ -1,0 +1,51 @@
+## singleProp.function
+# 给定fundcode，得到对应前N大重仓股的所属行业及对应持仓市值
+# 返回由行业与持仓市值构成的dataframe
+singleProp.function = function(fundcode,rptDate){
+    N = 10 # 取前N大重仓股
+    stIndustry = c() # 前N大重仓股票对应的行业
+    stInduProp = c() # 前N大重仓股票对应的持有市值
+    
+    # 生成第i大重仓股的行业及持有市值
+    for(i in 1:N){
+        # 读取第i大重仓股的股票代码及持有市值
+        stData = w.wsd(fundcode,"prt_topstockcode,prt_heavilyheldstocktonav",
+                       rptDate,rptDate,paste("order=",as.character(i)))$Data
+        
+        # 得到标准的股票代码
+        stCode = as.character(stData["PRT_TOPSTOCKCODE"])
+        if(nchar(stCode)==4){
+            stCode = paste(stCode,".HK",sep="")
+        }else if (startsWith(stCode,"6")){
+            stCode = paste(stCode,".SH",sep="")
+        }else{
+            stCode = paste(stCode,".SZ",sep="")
+        }
+        
+        # 由股票代码得到对应行业
+        indust = w.wsd(stCode,"industry_sw_2021",rptDate,rptDate,
+                       "industryType=1")$Data["INDUSTRY_SW_2021"]
+        prop = stData["PRT_HEAVILYHELDSTOCKTONAV"]
+        print(paste(stCode,w.wsd(stCode,"sec_name",
+                                 rptDate,rptDate)$Data["SEC_NAME"],indust,prop))
+        #
+        # if(indust %in% c("电力设备","电子")){
+        #   globalIndust <<- append(globalIndust,as.character(indust))
+        #   globalProp <<- append(globalProp,as.numeric(prop)*fundWeight)
+        #   print(paste(stCode,w.wsd(stCode,"sec_name",
+        #               rptDate,rptDate)$Data["SEC_NAME"],indust,prop))}
+        
+        # 将第i大重仓股对应行业写入stIndustry向量
+        stIndustry = append(stIndustry,as.character(indust))
+        # 将第i大重仓股对应持有市值占比写入stInduProp向量
+        stInduProp = append(stInduProp,as.numeric(stData["PRT_HEAVILYHELDSTOCKTONAV"]))
+    }
+    
+    # 将行业与对应持有市值写入singleProp
+    singleProp = data.frame(
+        industry = stIndustry,
+        proportion = stInduProp
+    )
+    return(singleProp)
+}
+

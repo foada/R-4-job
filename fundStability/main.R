@@ -7,7 +7,7 @@
 # fundData = data.frame(
 #   tradingDay = c(ymd_1,ymd_2,...),
 #   fundNvd = c(),
-#   SML = c(),
+#   SMB = c(),
 #   HML = c(),
 #   CMA = c()
 # )
@@ -17,13 +17,12 @@
 #从feather文件中读取数据，处理得到totalFundData格式的数据
 
 dataPrepare.function = function(rawFundData,rawFactorData){
-  colnames(rawFactorData)[1] = "TRADINGDAY"
-  rawData = merge(rawFundData,rawFactorData,by="TRADINGDAY",all="TRUE")
+  
   
   fundcodes = rawData$INNERCODE
   fundDatas = c()
   for(fundcode in fundcodes){
-    fundData = rawData[which(rawData$INNERCODE==fundcode)]
+    
     fundDatas = append(fundDatas,fundData)
   }
   
@@ -41,7 +40,8 @@ main.function = function(){
   
   rawFundData = read_feather(file.path(path,"fund_nvd.feather"), key = "INNERCODE")
   rawFactorData = read_feather(file.path(path,"factors.feather"), key = "ENDDATE")
-  totalFundData = dataPrepare.function(rawFundData,rawFactorData)
+  colnames(rawFactorData)[1] = "TRADINGDAY"
+  totalFundData = merge(rawFundData,rawFactorData,by="TRADINGDAY",all.rawFundData="TRUE")
   
   fundStability = fundStability.function(totalFundData)
   xlsx::write.xlsx(fundStability,"fundStability.xlsx")
